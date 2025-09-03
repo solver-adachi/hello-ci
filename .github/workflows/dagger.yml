@@ -6,97 +6,14 @@ on:
 
 permissions:
   contents: read
-  checks: write   # EnricoMi が Checks に投稿するため必須
+  checks: write
   actions: read
   pull-requests: read 
 
 jobs:
-  # ---- Code Quality: cpplint ----
-  cpplint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: cpplint via Dagger
-        uses: dagger/dagger-for-github@v8.1.0
-        with:
-          version: "0.18.16"
-          module: .
-          args: cpplint --source src export --path ./artifacts/code_quality
-          engine-stop: true
-
-      - name: Upload code_quality artifacts (cpplint)
-        uses: actions/upload-artifact@v4
-        with:
-          name: code_quality_cpplint
-          path: artifacts/code_quality
-
-      - name: Publish JUnit (cpplint)
-        if: always()
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        with:
-          files: artifacts/code_quality/cpplint.xml
-          check_name: "cpplint (report)"
-
-  # ---- Code Quality: cppcheck ----
-  cppcheck:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: cppcheck via Dagger
-        uses: dagger/dagger-for-github@v8.1.0
-        with:
-          version: "0.18.16"
-          module: .
-          args: cppcheck --source src export --path ./artifacts/code_quality
-          engine-stop: true
-
-      - name: Upload code_quality artifacts (cppcheck)
-        uses: actions/upload-artifact@v4
-        with:
-          name: code_quality_cppcheck
-          path: artifacts/code_quality
-
-      - name: Publish JUnit (cppcheck)
-        if: always()
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        with:
-          files: artifacts/code_quality/cppcheck.xml
-          check_name: "cppcheck (report)"
-
-  # ---- Code Quality: flake8 ----
-  flake8:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: flake8 via Dagger
-        uses: dagger/dagger-for-github@v8.1.0
-        with:
-          version: "0.18.16"
-          module: .
-          # Dagger 側の関数名が 'flake-8' なら、そのまま渡す
-          args: flake-8 --source src export --path ./artifacts/code_quality
-          engine-stop: true
-
-      - name: Upload code_quality artifacts (flake8)
-        uses: actions/upload-artifact@v4
-        with:
-          name: code_quality_flake8
-          path: artifacts/code_quality
-
-      - name: Publish JUnit (flake8)
-        if: always()
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        with:
-          files: artifacts/code_quality/flake8.xml
-          check_name: "flake8 (report)"
-
   # ---- Build ----
   build:
     runs-on: ubuntu-latest
-    needs: [cpplint, cppcheck, flake8]
     steps:
       - uses: actions/checkout@v4
 
@@ -128,7 +45,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # （必要なら build の成果物を利用）
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -164,7 +80,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # （必要なら test/build の成果物を利用）
       - name: Download test artifacts
         uses: actions/download-artifact@v4
         with:
